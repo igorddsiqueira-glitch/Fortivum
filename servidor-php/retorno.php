@@ -1,0 +1,2 @@
+<?php header('Content-Type: text/html; charset=utf-8'); ?>
+<!doctype html><html lang="pt-br"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Fortivum</title><body style="font-family:sans-serif;background:#101820;color:#e9c577;padding:40px"><h2>Pagamento enviado</h2><p>Volte ao Fortivum e toque em <b>Já paguei — verificar acesso</b>. A ativação depende da confirmação do Pix.</p></body></html>

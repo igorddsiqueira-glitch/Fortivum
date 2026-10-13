@@ -1,0 +1,19 @@
+FORTIVUM 1.0 — PROJETO ANDROID NATIVO
+
+Este pacote contém o código-fonte, não um APK compilado.
+
+COMO GERAR O APK
+1. Instale o Android Studio em um computador compatível (Windows 10/11, macOS ou Linux).
+2. Abra Android Studio > Open e selecione a pasta Fortivum.
+3. Aguarde sincronizar o Gradle e baixar o Android SDK 35.
+4. Menu Build > Build Bundle(s) / APK(s) > Build APK(s).
+5. Encontre o arquivo em app/build/outputs/apk/debug/app-debug.apk.
+6. Transfira o APK para um aparelho Android e autorize a instalação de fontes desconhecidas somente se confiar no arquivo.
+
+PARA DISTRIBUIÇÃO COMERCIAL
+- Gere uma versão release assinada com uma chave sua (Build > Generate Signed Bundle / APK).
+- Guarde a chave de assinatura em segurança.
+- Teste em diferentes aparelhos, faça uma política de privacidade e revise obrigações legais.
+- Este protótipo não oferece autenticação, criptografia de dados em repouso, sincronização na nuvem ou avaliação automática de mercado.
+- O backup JSON é texto legível: não compartilhe com terceiros.
+- A desinstalação apaga os registros locais se não houver backup.
