@@ -17,6 +17,14 @@ import android.os.Handler;
 
 public class MainActivity extends Activity {
   final int BG=Color.rgb(13,17,25), PANEL=Color.rgb(25,31,43), GOLD=Color.rgb(215,176,92), WHITE=Color.rgb(246,246,242), MUTED=Color.rgb(163,174,191);
+  static final String PIX_FALLBACK="00020126580014br.gov.bcb.pix013665861fdf-adfb-4ac4-bc66-5207fd400bd052040000530398654049.905802BR5924Misael Nascimento  Do Na6009Sao Paulo62240520daqr12780523143765366304AACB";
+  String pixCode(){
+    try(InputStream in=getAssets().open("pix/copia_e_cola.txt");ByteArrayOutputStream out=new ByteArrayOutputStream()){
+      byte[] buf=new byte[1024];int n;while((n=in.read(buf))!=-1)out.write(buf,0,n);
+      String value=out.toString("UTF-8").trim();return value.isEmpty()?PIX_FALLBACK:value;
+    }catch(Exception e){return PIX_FALLBACK;}
+  }
+  static final String SUPPORT_EMAIL="igorddsiqueira85@gmail.com";
   static final String API_BASE="https://loja-com.com/fortivum-api"; // SUBSTITUIR PELO SEU HTTPS
   final Handler handler=new Handler();
   String deviceId;
@@ -38,45 +46,98 @@ public class MainActivity extends Activity {
     if(API_BASE.contains("SEU-DOMINIO")){showPaywall("Configure o endereço do servidor para ativar o Pix.");return;}
     api("/status.php", "device_id="+deviceId, (json)->{
       validUntil=json.optLong("valid_until",0);
-      if(json.optBoolean("active",false)){render();}else showPaywall("Ative seu acesso anual por apenas R$ 1,00.");
+      if(json.optBoolean("active",false)){render();}else showPaywall("Para ativar seu acesso anual, pague R$ 9,90 via Pix.");
     });
   }
   interface Callback { void done(JSONObject obj); }
   void api(String path,String body,Callback callback){
     new Thread(()->{
       JSONObject result=new JSONObject();
+      HttpURLConnection conn=null;
       try{
-        URL url=new URL(API_BASE+path);
-        HttpURLConnection conn=(HttpURLConnection)url.openConnection();
-        conn.setRequestMethod("POST");conn.setConnectTimeout(12000);conn.setReadTimeout(12000);
-        conn.setDoOutput(true);conn.setRequestProperty("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
-        try(OutputStream out=conn.getOutputStream()){out.write(body.getBytes("UTF-8"));}
-        try(InputStream in=conn.getInputStream();ByteArrayOutputStream buf=new ByteArrayOutputStream()){
-          byte[] chunk=new byte[2048];int n;while((n=in.read(chunk))!=-1)buf.write(chunk,0,n);
-          result=new JSONObject(buf.toString("UTF-8"));
+        URL endpoint=new URL(API_BASE+path);
+        conn=(HttpURLConnection)endpoint.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(30000);
+        conn.setDoOutput(true);
+        conn.setRequestProperty("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
+        conn.setRequestProperty("Accept","application/json");
+        try(OutputStream out=conn.getOutputStream()){
+          out.write(body.getBytes("UTF-8"));
         }
-      }catch(Exception ex){try{result.put("error","Falha na conexão com o servidor. Verifique a internet e a configuração.");}catch(Exception ignored){}}
-      final JSONObject output=result;runOnUiThread(()->callback.done(output));
+        int code=conn.getResponseCode();
+        InputStream stream=code>=200 && code<300 ? conn.getInputStream() : conn.getErrorStream();
+        if(stream==null){
+          result.put("error","Servidor respondeu HTTP "+code+" sem detalhes.");
+        }else{
+          try(InputStream in=stream;ByteArrayOutputStream buf=new ByteArrayOutputStream()){
+            byte[] chunk=new byte[2048];int n;
+            while((n=in.read(chunk))!=-1)buf.write(chunk,0,n);
+            String response=buf.toString("UTF-8").trim();
+            try{
+              result=new JSONObject(response);
+              if(code<200 || code>=300){
+                String error=result.optString("error","Erro do servidor");
+                result.put("error",error+" (HTTP "+code+")");
+              }
+            }catch(org.json.JSONException badJson){
+              result=new JSONObject();
+              result.put("error","Resposta inválida do servidor (HTTP "+code+").");
+            }
+          }
+        }
+      }catch(Exception ex){
+        try{result.put("error","Falha de conexão: "+ex.getClass().getSimpleName()+". Verifique a internet e o servidor.");}
+        catch(Exception ignored){}
+      }finally{if(conn!=null)conn.disconnect();}
+      final JSONObject output=result;
+      runOnUiThread(()->callback.done(output));
     }).start();
   }
   void showPaywall(String message){
     ScrollView sc=new ScrollView(this);sc.setBackgroundColor(BG);root=vertical();pad(root,25);sc.addView(root);setContentView(sc);
-    space(25);root.addView(text("◆ FORTIVUM",28,GOLD,true));space(12);
-    root.addView(text("Seu patrimônio sob controle",24,WHITE,true));space(18);
-    for(String line:new String[]{"✓ Imóveis, veículos e investimentos","✓ Dívidas e patrimônio líquido","✓ Gráficos por categoria","✓ Backup manual dos seus registros","✓ Privacidade: dados no aparelho"}){
-      root.addView(text(line,17,WHITE,false));space(14);
+    space(24);root.addView(text("◆ FORTIVUM",28,GOLD,true));space(12);
+    root.addView(text("Seu patrimônio sob controle",23,WHITE,true));space(18);
+    for(String line:new String[]{"✓ Controle de bens e investimentos","✓ Patrimônio líquido e dívidas","✓ Backup dos registros","✓ Dados armazenados no aparelho"}){root.addView(text(line,17,WHITE,false));space(12);}
+    space(12);root.addView(text("Acesso anual: R$ 9,90",26,GOLD,true));space(14);
+    Button pay=button("Pagar R$ 9,90");root.addView(pay);pay.setOnClickListener(v->showPix());space(12);
+    Button paid=button("Já realizei o pagamento");root.addView(paid);paid.setOnClickListener(v->showPaidMessage());space(16);
+    if(message!=null&&!message.isEmpty())root.addView(text(message,13,MUTED,false));
+  }
+  void showPix(){
+    ScrollView sc=new ScrollView(this);sc.setBackgroundColor(BG);root=vertical();pad(root,22);sc.addView(root);setContentView(sc);
+    root.addView(text("Pagar via Pix",26,GOLD,true));space(10);
+    root.addView(text("Valor: R$ 9,90",20,WHITE,true));space(8);
+    root.addView(text("Confira os dados do destinatário no aplicativo do seu banco antes de pagar.",14,MUTED,false));space(15);
+    try(InputStream in=getAssets().open("pix/qr_code.jpg")){
+      android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(in);
+      ImageView qr=new ImageView(this);qr.setImageBitmap(bitmap);qr.setAdjustViewBounds(true);qr.setBackgroundColor(Color.WHITE);
+      root.addView(qr,new LinearLayout.LayoutParams(-1,-2));
+    }catch(Exception e){root.addView(text("Imagem Pix indisponível. Use o código Copia e Cola.",14,MUTED,false));}
+    space(14);root.addView(text("Pix Copia e Cola",17,WHITE,true));space(8);
+    TextView code=text(pixCode(),12,MUTED,false);code.setTextIsSelectable(true);root.addView(code);space(12);
+    Button copy=button("Copiar código Pix");root.addView(copy);
+    copy.setOnClickListener(v->{android.content.ClipboardManager cm=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);cm.setPrimaryClip(ClipData.newPlainText("Pix Fortivum",pixCode()));Toast.makeText(this,"Código Pix copiado!",Toast.LENGTH_SHORT).show();});
+    space(12);Button paid=button("Já realizei o pagamento");root.addView(paid);paid.setOnClickListener(v->showPaidMessage());space(12);
+    Button back=button("Voltar");root.addView(back);back.setOnClickListener(v->showPaywall(null));
+  }
+  void showPaidMessage(){
+    ScrollView sc=new ScrollView(this);sc.setBackgroundColor(BG);root=vertical();pad(root,25);sc.addView(root);setContentView(sc);
+    space(28);root.addView(text("Já realizou o pagamento?",24,GOLD,true));space(18);
+    root.addView(text("Fale com o suporte para confirmar seu pagamento e solicitar a liberação do acesso.",18,WHITE,false));space(20);
+    root.addView(text(SUPPORT_EMAIL,17,GOLD,true));space(18);
+    Button contact=button("Falar com suporte");root.addView(contact);contact.setOnClickListener(v->contactSupport());space(12);
+    Button back=button("Voltar");root.addView(back);back.setOnClickListener(v->showPaywall(null));
+  }
+  void contactSupport(){
+    Intent email=new Intent(Intent.ACTION_SENDTO);
+    email.setData(android.net.Uri.parse("mailto:"+SUPPORT_EMAIL));
+    email.putExtra(Intent.EXTRA_SUBJECT,"Fortivum - pagamento Pix / liberação de acesso");
+    email.putExtra(Intent.EXTRA_TEXT,"Olá, realizei o Pix de R$ 9,90 e preciso confirmar minha assinatura Fortivum.\nIdentificador do app: "+deviceId+"\nAnexo o comprovante de pagamento.");
+    try{startActivity(email);}catch(android.content.ActivityNotFoundException ex){
+      Toast.makeText(this,"Envie um e-mail para "+SUPPORT_EMAIL,Toast.LENGTH_LONG).show();
     }
-    space(12);root.addView(text("R$ 1,00 / 365 dias",28,GOLD,true));space(8);
-    root.addView(text("Renovação manual. Sem cobrança automática. Requer internet para verificar a licença.",13,MUTED,false));space(14);
-    root.addView(text(message,14,MUTED,false));space(18);
-    Button pay=button("Pagar R$ 1,00 via Pix");root.addView(pay);
-    pay.setOnClickListener(v->{pay.setEnabled(false);api("/checkout.php","device_id="+deviceId,(obj)->{
-      pay.setEnabled(true);String url=obj.optString("url","");
-      if(url.startsWith("https://checkout.infinitepay.com.br/")){
-        startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse(url)));
-      }else Toast.makeText(this,obj.optString("error","Não foi possível iniciar o Pix"),Toast.LENGTH_LONG).show();
-    });});space(10);
-    Button verify=button("Já paguei — verificar acesso");root.addView(verify);verify.setOnClickListener(v->checkLicense());
   }
   void render(){
     ScrollView sc=new ScrollView(this);sc.setFillViewport(true);sc.setBackgroundColor(BG);root=vertical();pad(root,22);sc.addView(root);setContentView(sc);

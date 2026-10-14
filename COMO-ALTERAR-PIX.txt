@@ -1,0 +1,21 @@
+FORTIVUM - EDITAR O PIX SEM MEXER NO CODIGO JAVA
+
+1) FOTO DO QR CODE:
+   app/src/main/assets/pix/qr_code.jpg
+   Substitua a imagem por outra com o MESMO NOME e extensao JPG.
+
+2) PIX COPIA E COLA:
+   app/src/main/assets/pix/copia_e_cola.txt
+   Abra o TXT, substitua o codigo inteiro e salve como UTF-8.
+
+3) Envie os arquivos alterados para o GitHub e compile um NOVO APK no Codemagic.
+   Alterar os arquivos depois de instalar o APK nao muda o app ja instalado.
+
+4) O botao Ja realizei o pagamento mostra apenas suporte e email.
+   O acesso NAO e liberado automaticamente. A ativacao exige confirmacao e
+   um mecanismo administrativo no servidor.
+
+5) O QR code e o texto devem ser da MESMA cobranca Pix. Confira no banco.
+
+6) O aplicativo consulta o status da licenca em loja-com.com/fortivum-api/status.php.
+   Este ZIP NAO inclui painel para liberar manualmente assinaturas.

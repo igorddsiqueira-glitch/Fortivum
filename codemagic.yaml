@@ -1,17 +1,19 @@
 workflows:
-  autofiscal-android:
-    name: AutoFiscal IA - APK Android
+  fortivum-android:
+    name: Fortivum Android APK
     max_build_duration: 60
-    instance_type: linux_x2
     environment:
       java: 17
     scripts:
-      - name: Instalar Android SDK 35
+      - name: Instalar Gradle 8.7
         script: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - name: Compilar APK debug
+          wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+          export PATH="/tmp/gradle-8.7/bin:$PATH"
+          gradle --version
+      - name: Compilar APK Android
         script: |
-          gradle :app:assembleDebug --no-daemon
+          export PATH="/tmp/gradle-8.7/bin:$PATH"
+          gradle assembleDebug --no-daemon
     artifacts:
       - app/build/outputs/apk/debug/*.apk

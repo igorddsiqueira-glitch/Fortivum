@@ -1,0 +1,11 @@
+FORTIVUM - Diagnóstico de pagamento Pix
+
+Este ZIP contém o projeto Android completo, com os arquivos na raiz do ZIP.
+Substitua os arquivos do repositório GitHub pelos correspondentes e gere um NOVO APK no Codemagic.
+Desinstale o APK antigo antes de testar (ATENÇÃO: isso apaga os dados locais do aplicativo; faça backup antes).
+
+Agora o app mostra o erro real do servidor, inclusive o código HTTP.
+O ZIP não contém credenciais nem os arquivos PHP do servidor.
+Se o Pix ainda falhar, envie uma captura da NOVA mensagem exibida.
+
+A correção ainda não foi compilada/testada em um aparelho.

@@ -1,0 +1,16 @@
+FORTIVUM — PIX FIXO R$ 9,90
+
+Projeto Android completo para raiz do GitHub e Codemagic.
+
+ALTERAÇÕES:
+- InfinitePay removida do fluxo Android.
+- QR Pix fixo e código Copia e Cola válidos (CRC verificado).
+- Botão Já paguei consulta status.php e NÃO libera sozinho.
+- Suporte: igorddsiqueira85@gmail.com.
+- Valor do QR: R$ 9,90 (não R$ 1,00).
+
+IMPORTANTE: O backend existente ainda precisa de um mecanismo administrativo de confirmação manual do pagamento para ativar a licença no banco de dados. Não há verificação automática de Pix por este código. O botão Já paguei consulta a licença existente. Não publique como ativação automática.
+
+Instalação: extraia todo o ZIP na raiz do repositório, preservando pastas e nomes, faça commit e compile no Codemagic.
+
+Este projeto não foi compilado nem testado em dispositivo nesta execução.
