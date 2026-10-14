@@ -95,40 +95,54 @@ public class MainActivity extends Activity {
       runOnUiThread(()->callback.done(output));
     }).start();
   }
+  final int BLUE=Color.rgb(24,93,202), NAVY=Color.rgb(14,32,62), LIGHT=Color.rgb(243,246,252), INK=Color.rgb(19,41,75), GRAY=Color.rgb(81,101,133);
+  void paymentPage(String heading, String subtitle){
+    ScrollView sc=new ScrollView(this);sc.setFillViewport(true);sc.setBackgroundColor(LIGHT);
+    root=vertical();sc.addView(root);setContentView(sc);
+    LinearLayout header=vertical();header.setPadding(24,36,24,30);header.setBackgroundColor(NAVY);root.addView(header);
+    header.addView(text(heading,29,Color.WHITE,true));spaceIn(header,12);
+    header.addView(text(subtitle,17,Color.rgb(191,207,232),false));
+  }
+  LinearLayout paymentCard(String title,String description){
+    LinearLayout card=vertical();card.setPadding(18,20,18,20);card.setBackground(shape(Color.WHITE,20));
+    LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(20,18,20,0);root.addView(card,lp);
+    card.addView(text(title,22,INK,true));
+    if(description!=null&&!description.isEmpty()){spaceIn(card,13);card.addView(text(description,17,GRAY,false));}
+    return card;
+  }
+  Button paymentButton(String label){
+    Button b=new Button(this);b.setText(label);b.setTextSize(17);b.setAllCaps(false);b.setTextColor(Color.WHITE);
+    b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(BLUE));return b;
+  }
+  void paymentAction(String label, Runnable action){
+    Button b=paymentButton(label);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);
+    lp.setMargins(25,20,25,0);root.addView(b,lp);b.setOnClickListener(v->action.run());
+  }
   void showPaywall(String message){
-    ScrollView sc=new ScrollView(this);sc.setBackgroundColor(BG);root=vertical();pad(root,25);sc.addView(root);setContentView(sc);
-    space(24);root.addView(text("◆ FORTIVUM",28,GOLD,true));space(12);
-    root.addView(text("Seu patrimônio sob controle",23,WHITE,true));space(18);
-    for(String line:new String[]{"✓ Controle de bens e investimentos","✓ Patrimônio líquido e dívidas","✓ Backup dos registros","✓ Dados armazenados no aparelho"}){root.addView(text(line,17,WHITE,false));space(12);}
-    space(12);root.addView(text("Acesso anual: R$ 9,90",26,GOLD,true));space(14);
-    Button pay=button("Pagar R$ 9,90");root.addView(pay);pay.setOnClickListener(v->showPix());space(12);
-    Button paid=button("Já realizei o pagamento");root.addView(paid);paid.setOnClickListener(v->showPaidMessage());space(16);
-    if(message!=null&&!message.isEmpty())root.addView(text(message,13,MUTED,false));
+    paymentPage("FORTIVUM", "Ative seu acesso anual");
+    paymentCard("Plano anual • R$ 9,90", "Acesso ao Fortivum por 365 dias após a confirmação do pagamento.");
+    paymentCard("Pagamento por Pix", "Pague com o código Pix Copia e Cola usando o aplicativo do seu banco.");
+    paymentAction("Pagar R$ 9,90",()->showPix());
+    paymentAction("Já realizei o pagamento",()->showPaidMessage());
   }
   void showPix(){
-    ScrollView sc=new ScrollView(this);sc.setBackgroundColor(BG);root=vertical();pad(root,22);sc.addView(root);setContentView(sc);
-    root.addView(text("Pagar via Pix",26,GOLD,true));space(10);
-    root.addView(text("Valor: R$ 9,90",20,WHITE,true));space(8);
-    root.addView(text("Confira os dados do destinatário no aplicativo do seu banco antes de pagar.",14,MUTED,false));space(15);
-    try(InputStream in=getAssets().open("pix/qr_code.jpg")){
-      android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(in);
-      ImageView qr=new ImageView(this);qr.setImageBitmap(bitmap);qr.setAdjustViewBounds(true);qr.setBackgroundColor(Color.WHITE);
-      root.addView(qr,new LinearLayout.LayoutParams(-1,-2));
-    }catch(Exception e){root.addView(text("Imagem Pix indisponível. Use o código Copia e Cola.",14,MUTED,false));}
-    space(14);root.addView(text("Pix Copia e Cola",17,WHITE,true));space(8);
-    TextView code=text(pixCode(),12,MUTED,false);code.setTextIsSelectable(true);root.addView(code);space(12);
-    Button copy=button("Copiar código Pix");root.addView(copy);
-    copy.setOnClickListener(v->{android.content.ClipboardManager cm=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);cm.setPrimaryClip(ClipData.newPlainText("Pix Fortivum",pixCode()));Toast.makeText(this,"Código Pix copiado!",Toast.LENGTH_SHORT).show();});
-    space(12);Button paid=button("Já realizei o pagamento");root.addView(paid);paid.setOnClickListener(v->showPaidMessage());space(12);
-    Button back=button("Voltar");root.addView(back);back.setOnClickListener(v->showPaywall(null));
+    paymentPage("Pagamento por Pix", "Plano anual • R$ 9,90");
+    LinearLayout card=paymentCard("Como pagar", "1. Toque em Copiar código Pix.\n\n2. Abra o aplicativo do seu banco.\n\n3. Entre em Pix e selecione Pix Copia e Cola.\n\n4. Cole o código, confira o nome do recebedor e o valor de R$ 9,90.\n\n5. Confirme o pagamento no banco.");
+    spaceIn(card,20);
+    TextView code=text(pixCode(),12,GRAY,false);code.setTextIsSelectable(true);card.addView(code);
+    paymentAction("Copiar código Pix",()->{
+      android.content.ClipboardManager cm=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+      cm.setPrimaryClip(ClipData.newPlainText("Pix Fortivum",pixCode()));
+      Toast.makeText(this,"Código Pix copiado!",Toast.LENGTH_SHORT).show();
+    });
+    paymentAction("Já realizei o pagamento",()->showPaidMessage());
+    paymentAction("Voltar",()->showPaywall(null));
   }
   void showPaidMessage(){
-    ScrollView sc=new ScrollView(this);sc.setBackgroundColor(BG);root=vertical();pad(root,25);sc.addView(root);setContentView(sc);
-    space(28);root.addView(text("Já realizou o pagamento?",24,GOLD,true));space(18);
-    root.addView(text("Fale com o suporte para confirmar seu pagamento e solicitar a liberação do acesso.",18,WHITE,false));space(20);
-    root.addView(text(SUPPORT_EMAIL,17,GOLD,true));space(18);
-    Button contact=button("Falar com suporte");root.addView(contact);contact.setOnClickListener(v->contactSupport());space(12);
-    Button back=button("Voltar");root.addView(back);back.setOnClickListener(v->showPaywall(null));
+    paymentPage("Pagamento realizado", "Confirmação do acesso anual");
+    paymentCard("Fale com o suporte", "Se você já pagou, entre em contato para confirmar o pagamento e solicitar a liberação do seu acesso.\n\n"+SUPPORT_EMAIL);
+    paymentAction("Enviar e-mail ao suporte",()->contactSupport());
+    paymentAction("Voltar",()->showPaywall(null));
   }
   void contactSupport(){
     Intent email=new Intent(Intent.ACTION_SENDTO);
